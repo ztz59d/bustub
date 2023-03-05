@@ -101,10 +101,66 @@ auto Trie::Put(std::string_view key, T value) const -> Trie {
 }
 
 auto Trie::Remove(std::string_view key) const -> Trie {
-  throw NotImplementedException("Trie::Remove is not implemented.");
+  // throw NotImplementedException("Trie::Remove is not implemented.");
 
   // You should walk through the trie and remove nodes if necessary. If the node doesn't contain a value any more,
   // you should convert it to `TrieNode`. If a node doesn't have children any more, you should remove it.
+  if (key.empty() && root_ != nullptr && root_->is_value_node_) {
+    return Trie(std::make_shared<TrieNode>(root_->children_));
+  }
+
+  // if (Get(key) == nullptr) {
+  //   return *this;
+  // }
+
+  std::shared_ptr<const TrieNode> cur = root_;
+  std::shared_ptr<TrieNode> lower;
+  std::shared_ptr<TrieNode> upper;
+  std::stack<std::shared_ptr<const bustub::TrieNode>> temp;
+
+  // finding the node
+  for (size_t i = 0; i < key.size(); ++i) {
+    if (cur->children_.find(key[i]) != cur->children_.end()) {
+      if (i == key.size() - 1 && !cur->children_.at(key[i])->is_value_node_) {
+        return *this;
+      }
+      temp.push(cur);
+      cur = cur->children_.at(key[i]);
+    } else {
+      return *this;
+    }
+  }
+
+  // deleting
+  lower = std::make_shared<TrieNode>(cur->children_);
+  // is not leaf node
+  size_t i = key.size() - 1;
+  if (lower->children_.size() > 0) {
+    while (!temp.empty()) {
+      upper = temp.top()->Clone();
+      upper->children_[key[i]] = lower;
+      lower = upper;
+      temp.pop();
+      i--;
+    }
+  } else {
+    // is leaf node
+    // delete the whole branch
+    while (!temp.empty() && lower->children_.size() < 2 && !lower->is_value_node_) {
+      lower = temp.top()->Clone();
+      temp.pop();
+      i--;
+    }
+    lower->children_.erase(key[i + 1]);
+    while (!temp.empty()) {
+      upper = temp.top()->Clone();
+      temp.pop();
+      upper->children_[key[i]] = lower;
+      lower = upper;
+      i--;
+    }
+  }
+  return Trie(lower);
 }
 
 // Below are explicit instantiation of template functions.

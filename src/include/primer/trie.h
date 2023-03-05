@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <stack>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
